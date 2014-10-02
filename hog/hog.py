@@ -88,24 +88,24 @@ def play(strategy0, strategy1, goal=GOAL_SCORE):
     strategy1:  The strategy function for Player 1, who plays second.
     """
     who = 0  # Which player is about to take a turn, 0 (first) or 1 (second)
-    score = [0, 0]
-    while max(score) < goal:
+    score0, score1 = 0, 0
+    while max(score0, score1) < goal:
         if who == 0:
-            dice = select_dice(score[0], score[1])
-            num_rolls = strategy0(score[0], score[1])
-            points = take_turn(num_rolls, score[1], dice)
-            score[0] += points
+            dice = select_dice(score0, score1)
+            num_rolls = strategy0(score0, score1)
+            points = take_turn(num_rolls, score1, dice)
+            score0 += points
             who = 1
         else:
-            dice = select_dice(score[1], score[0])
-            num_rolls = strategy1(score[1], score[0])
-            points = take_turn(num_rolls, score[0], dice)
-            score[1] += points
+            dice = select_dice(score1, score0)
+            num_rolls = strategy1(score1, score0)
+            points = take_turn(num_rolls, score0, dice)
+            score1 += points
             who = 0
-        if score[0] == 2 * score[1] or score[1] == 2 * score[0]:
+        if score0 == 2 * score1 or score1 == 2 * score0:
             # swine swap
-            score[0], score[1] = score[1], score[0]
-    return tuple(score)
+            score0, score1 = score1, score0
+    return score0, score1
 
 #######################
 # Phase 2: Strategies #
@@ -209,13 +209,13 @@ def run_experiments():
         four_sided_max = max_scoring_num_rolls(four_sided)
         print('Max scoring num rolls for four-sided dice:', four_sided_max)
 
-    if True: # Change to True to test always_roll(8)
+    if False: # Change to True to test always_roll(8)
         print('always_roll(8) win rate:', average_win_rate(always_roll(8)))
 
-    if True: # Change to True to test bacon_strategy
+    if False: # Change to True to test bacon_strategy
         print('bacon_strategy win rate:', average_win_rate(bacon_strategy))
 
-    if True: # Change to True to test swap_strategy
+    if False: # Change to True to test swap_strategy
         print('swap_strategy win rate:', average_win_rate(swap_strategy))
 
     if True: # Change to True to test final_strategy
@@ -272,7 +272,7 @@ def make_distribution(fn, num_samples=1000):
     >>> dice = make_test_dice(3, 3, 5, 6)
     >>> dist_dice = make_distribution(dice, 1000)
     >>> list(sorted(dist_dice().items()))
-    {3: 0.5, 5: 0.25, 6: 0.25}
+    [(3, 0.5), (5, 0.25), (6, 0.25)]
     """
     def distribution(*args):
       d = {}
@@ -286,54 +286,90 @@ def make_distribution(fn, num_samples=1000):
       return d
     return distribution
 
-def compute_score(score, opponent_score, points):
-    if score + points == 2 * opponent_score:
+def compute_score(score, opponent_score, x):
+    """Compute the new score if this player scores x points.
+
+    >>> compute_score(15, 10, 5)
+    10
+    >>> compute_score(15, 40, 5)
+    40
+    >>> compute_score(23, 26, 5)
+    28
+    """
+    new_score = score + x
+    if new_score == 2 * opponent_score:
       return opponent_score
-    if opponent_score == 2 * (score + points):
+    if opponent_score == 2 * new_score:
       return opponent_score
-    return score
+    return new_score
 
 def compute_expected_score(score, opponent_score, d):
+    """Compute the new expected score if this player performs an action
+    with probability distribution d.
+
+    >>> compute_expected_score(10, 0, {32: 1.0})
+    42.0
+    >>> compute_expected_score(15, 40, {5: 0.25, 1: 0.75})
+    22.0
+    """
     expected_score = 0
     for x, p in d.items():
-      score = compute_score(score, opponent_score, x)
-      expected_score += score * p
+      partial_score = compute_score(score, opponent_score, x)
+      expected_score += partial_score * p
     return expected_score
 
-def compute_heuristic_score(score, opponent_score, d):
-    # TODO: incorporate "leave them with multiple of 7" rule
-    return compute_expected_score(score, opponent_score, d)
+FOUR_SIDED_VALUE = 5
 
-# NOTE: cache of distributions
+def compute_four_sided_p(score, opponent_score, d):
+    """Compute the probability of leaving the opponent with four-sided dice.
+
+    >>> compute_four_sided_p(12, 15, {1: 1.0})
+    1.0
+    >>> compute_four_sided_p(12, 15, {1: 0.75, 5: 0.25})
+    0.75
+    >>> compute_four_sided_p(12, 15, {1: 0.25, 5: 0.25, 8: 0.25, 10: 0.25})
+    0.5
+    """
+    four_sided_p = 0
+    for x, p in d.items():
+      if (score + x + opponent_score) % 7 == 0:
+        four_sided_p += p
+    return four_sided_p
+
+def compute_heuristic_score(score, opponent_score, d):
+    expected_score = compute_expected_score(score, opponent_score, d)
+    four_sided_p = compute_four_sided_p(score, opponent_score, d)
+    return expected_score + four_sided_p * FOUR_SIDED_VALUE
+
 d_dist = make_distribution(roll_dice, 1000)
 d_four_sided = {}
 d_six_sided = {}
+for num_rolls in range(1, 11):
+    d_four_sided[num_rolls] = d_dist(num_rolls, four_sided)
+    d_six_sided[num_rolls] = d_dist(num_rolls, six_sided)
 def get_distribution(num_rolls, dice):
     if dice == four_sided:
-        if num_rolls not in d_four_sided:
-            d_four_sided[num_rolls] = d_dist(num_rolls, dice)
         return d_four_sided[num_rolls]
     elif dice == six_sided:
-        if num_rolls not in d_six_sided:
-            d_six_sided[num_rolls] = d_dist(num_rolls, dice)
         return d_six_sided[num_rolls]
     else:
         return d_dist(num_rolls, dice)
-
 
 def final_strategy(score, opponent_score):
     """This strategy does some magic.
     """
     bacon = max(opponent_score % 10, opponent_score // 10) + 1
     d_bacon = {bacon: 1}
-    best_score = compute_expected_score(score, opponent_score, d_bacon)
+    best_new_score = compute_expected_score(score, opponent_score, d_bacon)
     best = 0
+    print('bacon: %.1f -> %.1f' % (score, best_new_score))
     dice = select_dice(score, opponent_score)
     for num_rolls in range(1, 11):
         d = get_distribution(num_rolls, dice)
-        score = compute_expected_score(score, opponent_score, d)
-        if score > best_score:
-            best_score = score
+        new_score = compute_expected_score(score, opponent_score, d)
+        print('%d rolls: %.1f -> %.1f' % (num_rolls, score, new_score))
+        if new_score > best_new_score:
+            best_score = best_new_score
             best = num_rolls
     return num_rolls
 
