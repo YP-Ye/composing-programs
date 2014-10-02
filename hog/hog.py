@@ -256,21 +256,47 @@ def swap_strategy(score, opponent_score):
     >>> swap_strategy(12, 12) # Baseline
     5
     """
-    "*** YOUR CODE HERE ***"
     bacon = max(opponent_score % 10, opponent_score // 10) + 1
     if opponent_score == 2 * (score + bacon):
       return 0
+    elif (score + bacon) == 2 * opponent_score:
+      return BASELINE_NUM_ROLLS
     if bacon >= BACON_MARGIN:
       return 0
     return BASELINE_NUM_ROLLS
 
-def final_strategy(score, opponent_score):
-    """Write a brief description of your final strategy.
+def make_distribution(fn, num_samples=1000):
+    """Return a function that returns the observed probability distribution of
+    FN when called.  The return value is a mapping d = {x: p(x)}.
 
-    *** YOUR DESCRIPTION HERE ***
+    >>> dice = make_test_dice(3, 3, 5, 6)
+    >>> dist_dice = make_distribution(dice, 1000)
+    >>> list(sorted(dist_dice().items()))
+    {3: 0.5, 5: 0.25, 6: 0.25}
     """
-    "*** YOUR CODE HERE ***"
-    return 5 # Replace this statement
+    def distribution(*args):
+      d = {}
+      for i in range(num_samples):
+        x = fn(*args)
+        if x not in d:
+          d[x] = 0
+        d[x] += 1
+      for x in d:
+        d[x] /= num_samples
+      return d
+    return distribution
+
+def final_strategy(score, opponent_score):
+    """This strategy does some magic.
+    """
+    bacon = max(opponent_score % 10, opponent_score // 10) + 1
+    if opponent_score == 2 * (score + bacon):
+      return 0
+    elif (score + bacon) == 2 * opponent_score:
+        return BASELINE_NUM_ROLLS
+    if bacon >= BACON_MARGIN:
+      return 0
+    return BASELINE_NUM_ROLLS
 
 
 ##########################
