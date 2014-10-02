@@ -88,9 +88,24 @@ def play(strategy0, strategy1, goal=GOAL_SCORE):
     strategy1:  The strategy function for Player 1, who plays second.
     """
     who = 0  # Which player is about to take a turn, 0 (first) or 1 (second)
-    score, opponent_score = 0, 0
-    "*** YOUR CODE HERE ***"
-    return score, opponent_score  # You may wish to change this line.
+    score = [0, 0]
+    while max(score) < goal:
+        if who == 0:
+            dice = select_dice(score[0], score[1])
+            num_rolls = strategy0(score[0], score[1])
+            points = take_turn(num_rolls, score[1], dice)
+            score[0] += points
+            who = 1
+        else:
+            dice = select_dice(score[1], score[0])
+            num_rolls = strategy1(score[1], score[0])
+            points = take_turn(num_rolls, score[0], dice)
+            score[1] += points
+            who = 0
+        if score[0] == 2 * score[1] or score[1] == 2 * score[0]:
+            # swine swap
+            score[0], score[1] = score[1], score[0]
+    return tuple(score)
 
 #######################
 # Phase 2: Strategies #
