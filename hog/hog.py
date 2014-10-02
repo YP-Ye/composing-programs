@@ -218,7 +218,7 @@ def run_experiments():
     if True: # Change to True to test swap_strategy
         print('swap_strategy win rate:', average_win_rate(swap_strategy))
 
-    if False: # Change to True to test final_strategy
+    if True: # Change to True to test final_strategy
         print('final_strategy win rate:', average_win_rate(final_strategy))
 
     "*** You may add additional experiments as you wish ***"
@@ -286,17 +286,56 @@ def make_distribution(fn, num_samples=1000):
       return d
     return distribution
 
+def compute_score(score, opponent_score, points):
+    if score + points == 2 * opponent_score:
+      return opponent_score
+    if opponent_score == 2 * (score + points):
+      return opponent_score
+    return score
+
+def compute_expected_score(score, opponent_score, d):
+    expected_score = 0
+    for x, p in d.items():
+      score = compute_score(score, opponent_score, x)
+      expected_score += score * p
+    return expected_score
+
+def compute_heuristic_score(score, opponent_score, d):
+    # TODO: incorporate "leave them with multiple of 7" rule
+    return compute_expected_score(score, opponent_score, d)
+
+# NOTE: cache of distributions
+d_dist = make_distribution(roll_dice, 1000)
+d_four_sided = {}
+d_six_sided = {}
+def get_distribution(num_rolls, dice):
+    if dice == four_sided:
+        if num_rolls not in d_four_sided:
+            d_four_sided[num_rolls] = d_dist(num_rolls, dice)
+        return d_four_sided[num_rolls]
+    elif dice == six_sided:
+        if num_rolls not in d_six_sided:
+            d_six_sided[num_rolls] = d_dist(num_rolls, dice)
+        return d_six_sided[num_rolls]
+    else:
+        return d_dist(num_rolls, dice)
+
+
 def final_strategy(score, opponent_score):
     """This strategy does some magic.
     """
     bacon = max(opponent_score % 10, opponent_score // 10) + 1
-    if opponent_score == 2 * (score + bacon):
-      return 0
-    elif (score + bacon) == 2 * opponent_score:
-        return BASELINE_NUM_ROLLS
-    if bacon >= BACON_MARGIN:
-      return 0
-    return BASELINE_NUM_ROLLS
+    d_bacon = {bacon: 1}
+    best_score = compute_expected_score(score, opponent_score, d_bacon)
+    best = 0
+    dice = select_dice(score, opponent_score)
+    for num_rolls in range(1, 11):
+        d = get_distribution(num_rolls, dice)
+        score = compute_expected_score(score, opponent_score, d)
+        if score > best_score:
+            best_score = score
+            best = num_rolls
+    return num_rolls
 
 
 ##########################
