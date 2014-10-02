@@ -176,7 +176,16 @@ def max_scoring_num_rolls(dice=six_sided):
     10 dice scores 30.0 on average
     10
     """
-    "*** YOUR CODE HERE ***"
+    best_score = 0
+    best = 0
+    averaged = make_averaged(roll_dice)
+    for num_dice in range(1, 11):
+        score = averaged(num_dice, dice)
+        print('%d dice scores %.1f on average' % (num_dice, score))
+        if score > best_score:
+            best_score = score
+            best = num_dice
+    return best
 
 def winner(strategy0, strategy1):
     """Return 0 if strategy0 wins against strategy1, and 1 otherwise."""
