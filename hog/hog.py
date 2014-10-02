@@ -32,6 +32,8 @@ def roll_dice(num_rolls, dice=six_sided):
         return 1
     return total
 
+def take_bacon(opponent_score):
+    return max(opponent_score % 10, opponent_score // 10) + 1
 
 def take_turn(num_rolls, opponent_score, dice=six_sided):
     """Simulate a turn rolling NUM_ROLLS dice, which may be 0 (Free bacon).
@@ -45,7 +47,7 @@ def take_turn(num_rolls, opponent_score, dice=six_sided):
     assert num_rolls <= 10, 'Cannot roll more than 10 dice.'
     assert opponent_score < 100, 'The game should be over.'
     if num_rolls == 0:
-        return max(opponent_score % 10, opponent_score // 10) + 1
+        return take_bacon(opponent_score)
     return roll_dice(num_rolls, dice)
 
 # Playing a game
@@ -203,7 +205,7 @@ def average_win_rate(strategy, baseline=always_roll(BASELINE_NUM_ROLLS)):
 
 def run_experiments():
     """Run a series of strategy experiments and report results."""
-    if True: # Change to False when done finding max_scoring_num_rolls
+    if False: # Change to False when done finding max_scoring_num_rolls
         six_sided_max = max_scoring_num_rolls(six_sided)
         print('Max scoring num rolls for six-sided dice:', six_sided_max)
         four_sided_max = max_scoring_num_rolls(four_sided)
@@ -236,7 +238,7 @@ def bacon_strategy(score, opponent_score):
     >>> bacon_strategy(50, 70)
     0
     """
-    bacon = max(opponent_score % 10, opponent_score // 10) + 1
+    bacon = take_bacon(opponent_score)
     if bacon >= BACON_MARGIN:
       return 0
     return BASELINE_NUM_ROLLS
@@ -256,7 +258,7 @@ def swap_strategy(score, opponent_score):
     >>> swap_strategy(12, 12) # Baseline
     5
     """
-    bacon = max(opponent_score % 10, opponent_score // 10) + 1
+    bacon = take_bacon(opponent_score)
     if opponent_score == 2 * (score + bacon):
       return 0
     elif (score + bacon) == 2 * opponent_score:
@@ -301,6 +303,15 @@ def compute_score(score, opponent_score, x):
       return opponent_score
     if opponent_score == 2 * new_score:
       return opponent_score
+    # NOTE: if we leave our opponent with 1 point less than half our score on
+    # their turn, their obvious best move is to roll 10 dice.
+    if new_score == 2 * (opponent_score + 1):
+      return opponent_score + 1
+    # NOTE: if we leave our opponent with <bacon> less than half our score on
+    # their turn, their obvious best move is to roll 0 dice and take bacon.
+    new_bacon = take_bacon(new_score)
+    if new_score == 2 * (opponent_score + new_bacon):
+      return opponent_score + new_bacon
     return new_score
 
 def compute_expected_score(score, opponent_score, d):
@@ -311,6 +322,8 @@ def compute_expected_score(score, opponent_score, d):
     42.0
     >>> compute_expected_score(15, 40, {5: 0.25, 1: 0.75})
     22.0
+    >>> compute_expected_score(15, 10, {5: 0.5, 1: 0.5})
+    13.0
     """
     expected_score = 0
     for x, p in d.items():
@@ -318,7 +331,7 @@ def compute_expected_score(score, opponent_score, d):
       expected_score += partial_score * p
     return expected_score
 
-FOUR_SIDED_VALUE = 5
+FOUR_SIDED_VALUE = 2
 
 def compute_four_sided_p(score, opponent_score, d):
     """Compute the probability of leaving the opponent with four-sided dice.
@@ -341,12 +354,15 @@ def compute_heuristic_score(score, opponent_score, d):
     four_sided_p = compute_four_sided_p(score, opponent_score, d)
     return expected_score + four_sided_p * FOUR_SIDED_VALUE
 
-d_dist = make_distribution(roll_dice, 1000)
+d_dist = make_distribution(roll_dice, 10000)
 d_four_sided = {}
 d_six_sided = {}
+print('building distribution tables...')
 for num_rolls in range(1, 11):
+    print('%d rolls...' % (num_rolls, ))
     d_four_sided[num_rolls] = d_dist(num_rolls, four_sided)
     d_six_sided[num_rolls] = d_dist(num_rolls, six_sided)
+print('done.')
 def get_distribution(num_rolls, dice):
     if dice == four_sided:
         return d_four_sided[num_rolls]
@@ -356,22 +372,29 @@ def get_distribution(num_rolls, dice):
         return d_dist(num_rolls, dice)
 
 def final_strategy(score, opponent_score):
-    """This strategy does some magic.
+    """This strategy models the probability distribution of scores for each
+    possible move, then uses those distributions to compute the move with the
+    best expected score.
+
+    We apply some additional heuristics that were found to improve
+    average win rates:
+
+    - it is better to force the opponent to roll four-sided dice;
+    - it is bad to leave the opponent with one point less than half your score;
+    - it is bad to leave the opponent with <bacon> less than half your score.
     """
-    bacon = max(opponent_score % 10, opponent_score // 10) + 1
-    d_bacon = {bacon: 1}
-    best_new_score = compute_expected_score(score, opponent_score, d_bacon)
-    best = 0
-    print('bacon: %.1f -> %.1f' % (score, best_new_score))
+    bacon = take_bacon(opponent_score)
+    # NOTE: a 0-roll move is the same as taking "bacon" with probability 1
+    best_new_score = compute_expected_score(score, opponent_score, {bacon: 1})
+    best_num_rolls = 0
     dice = select_dice(score, opponent_score)
     for num_rolls in range(1, 11):
         d = get_distribution(num_rolls, dice)
         new_score = compute_expected_score(score, opponent_score, d)
-        print('%d rolls: %.1f -> %.1f' % (num_rolls, score, new_score))
         if new_score > best_new_score:
-            best_score = best_new_score
-            best = num_rolls
-    return num_rolls
+            best_new_score = new_score
+            best_num_rolls = num_rolls
+    return best_num_rolls
 
 
 ##########################
