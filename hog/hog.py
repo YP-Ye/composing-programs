@@ -61,7 +61,10 @@ def select_dice(score, opponent_score):
     >>> select_dice(0, 0) == four_sided
     True
     """
-    "*** YOUR CODE HERE ***"
+    total_score = score + opponent_score
+    if total_score % 7 == 0:
+        return four_sided
+    return six_sided
 
 def other(who):
     """Return the other player, for a player WHO numbered 0 or 1.
