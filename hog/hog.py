@@ -159,13 +159,13 @@ def make_averaged(fn, num_samples=1000):
         return sum(fn(*args) for i in range(num_samples)) / num_samples
     return averaged
 
-def max_scoring_num_rolls(dice=six_sided):
+def max_scoring_num_rolls(num_iters, dice=six_sided):
     """Return the number of dice (1 to 10) that gives the highest average turn
     score by calling roll_dice with the provided DICE.  Print all averages as in
     the doctest below.  Assume that dice always returns positive outcomes.
 
     >>> dice = make_test_dice(3)
-    >>> max_scoring_num_rolls(dice)
+    >>> max_scoring_num_rolls(1000, dice)
     1 dice scores 3.0 on average
     2 dice scores 6.0 on average
     3 dice scores 9.0 on average
@@ -180,7 +180,7 @@ def max_scoring_num_rolls(dice=six_sided):
     """
     best_score = 0
     best = 0
-    averaged = make_averaged(roll_dice)
+    averaged = make_averaged(roll_dice, num_iters)
     for num_dice in range(1, 11):
         score = averaged(num_dice, dice)
         print('%d dice scores %.1f on average' % (num_dice, score))
@@ -197,31 +197,31 @@ def winner(strategy0, strategy1):
     else:
         return 1
 
-def average_win_rate(strategy, baseline=always_roll(BASELINE_NUM_ROLLS)):
+def average_win_rate(num_iters, strategy, baseline=always_roll(BASELINE_NUM_ROLLS)):
     """Return the average win rate (0 to 1) of STRATEGY against BASELINE."""
-    win_rate_as_player_0 = 1 - make_averaged(winner)(strategy, baseline)
-    win_rate_as_player_1 = make_averaged(winner)(baseline, strategy)
+    win_rate_as_player_0 = 1 - make_averaged(winner, num_iters)(strategy, baseline)
+    win_rate_as_player_1 = make_averaged(winner, num_iters)(baseline, strategy)
     return (win_rate_as_player_0 + win_rate_as_player_1) / 2 # Average results
 
-def run_experiments():
+def run_experiments(num_iters):
     """Run a series of strategy experiments and report results."""
     if False: # Change to False when done finding max_scoring_num_rolls
-        six_sided_max = max_scoring_num_rolls(six_sided)
+        six_sided_max = max_scoring_num_rolls(num_iters, six_sided)
         print('Max scoring num rolls for six-sided dice:', six_sided_max)
-        four_sided_max = max_scoring_num_rolls(four_sided)
+        four_sided_max = max_scoring_num_rolls(num_iters, four_sided)
         print('Max scoring num rolls for four-sided dice:', four_sided_max)
 
     if False: # Change to True to test always_roll(8)
-        print('always_roll(8) win rate:', average_win_rate(always_roll(8)))
+        print('always_roll(8) win rate:', average_win_rate(num_iters, always_roll(8)))
 
     if False: # Change to True to test bacon_strategy
-        print('bacon_strategy win rate:', average_win_rate(bacon_strategy))
+        print('bacon_strategy win rate:', average_win_rate(num_iters, bacon_strategy))
 
     if False: # Change to True to test swap_strategy
-        print('swap_strategy win rate:', average_win_rate(swap_strategy))
+        print('swap_strategy win rate:', average_win_rate(num_iters, swap_strategy))
 
     if True: # Change to True to test final_strategy
-        print('final_strategy win rate:', average_win_rate(final_strategy))
+        print('final_strategy win rate:', average_win_rate(num_iters, final_strategy))
 
     "*** You may add additional experiments as you wish ***"
 
@@ -331,7 +331,7 @@ def compute_expected_score(score, opponent_score, d):
       expected_score += partial_score * p
     return expected_score
 
-FOUR_SIDED_VALUE = 2
+FOUR_SIDED_VALUE = 3
 
 def compute_four_sided_p(score, opponent_score, d):
     """Compute the probability of leaving the opponent with four-sided dice.
@@ -355,15 +355,24 @@ def compute_heuristic_score(score, opponent_score, d):
     return expected_score + four_sided_p * FOUR_SIDED_VALUE
 
 d_dist = make_distribution(roll_dice, 10000)
-d_four_sided = {}
-d_six_sided = {}
-print('building distribution tables...')
-for num_rolls in range(1, 11):
-    print('%d rolls...' % (num_rolls, ))
-    d_four_sided[num_rolls] = d_dist(num_rolls, four_sided)
-    d_six_sided[num_rolls] = d_dist(num_rolls, six_sided)
-print('done.')
+d_four_sided = None
+d_six_sided = None
+
+def build_distribution_tables():
+    print('building distribution tables...')
+    global d_four_sided
+    global d_six_sided
+    d_four_sided = [None] * 11
+    d_six_sided = [None] * 11
+    for num_rolls in range(1, 11):
+        print('%d rolls...' % (num_rolls, ))
+        d_four_sided[num_rolls] = d_dist(num_rolls, four_sided)
+        d_six_sided[num_rolls] = d_dist(num_rolls, six_sided)
+    print('done.')
+
 def get_distribution(num_rolls, dice):
+    if d_four_sided is None or d_six_sided is None:
+      build_distribution_tables()
     if dice == four_sided:
         return d_four_sided[num_rolls]
     elif dice == six_sided:
@@ -459,6 +468,9 @@ def run(*args):
                         help='Run interactive tests for the specified question')
     parser.add_argument('--run_experiments', '-r', action='store_true',
                         help='Runs strategy experiments')
+    parser.add_argument('--num_iters', '-n', type=int,
+                        help='Set number of iterations for win rate',
+                        default=1000)
     args = parser.parse_args()
 
     if args.interactive:
@@ -473,4 +485,4 @@ def run(*args):
             print('\nQuitting interactive test')
             exit(0)
     elif args.run_experiments:
-        run_experiments()
+        run_experiments(args.num_iters)
