@@ -6,6 +6,9 @@ def count_partitions_DP(n, m):
     them in a table.  It's really just recursion plus caching, minus the
     recursive function calls.
 
+    Note that, despite what the text says, this isn't "substantially" more
+    involved :)
+
     >>> count_partitions_DP(6, 4)
     9
     >>> count_partitions_DP(5, 5)
