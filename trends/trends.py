@@ -325,6 +325,24 @@ def find_state_center(polygons):
 # Phase 3: The Mood of the Nation #
 ###################################
 
+def dict_map(fn, d):
+    d_mapped = {}
+    for k, v in d.items():
+        d_mapped[k] = fn(v)
+    return d_mapped
+
+def dict_argmin(fn, d):
+    k_min, x_min = None, float('inf')
+    for k, v in d.items():
+        x = fn(v)
+        if x < x_min:
+            k_min, x_min = k, x
+    return k_min
+
+def get_tweet_state(tweet, state_centers):
+    location = tweet_location(tweet)
+    return dict_argmin(lambda P: geo_distance(location, P), state_centers)
+
 def group_tweets_by_state(tweets):
     """Return a dictionary that aggregates tweets by their nearest state center.
 
@@ -345,7 +363,11 @@ def group_tweets_by_state(tweets):
     '"welcome to san francisco" @ (38, -122)'
     """
     tweets_by_state = {}
-    "*** YOUR CODE HERE ***"
+    state_centers = dict_map(find_state_center, us_states)
+    for tweet in tweets:
+        state = get_tweet_state(tweet, state_centers)
+        state_tweets = tweets_by_state.setdefault(state, [])
+        state_tweets.append(tweet)
     return tweets_by_state
 
 def average_sentiments(tweets_by_state):
