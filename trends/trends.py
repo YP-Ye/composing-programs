@@ -208,6 +208,18 @@ def get_word_sentiment(word):
     # Learn more: http://docs.python.org/3/library/stdtypes.html#dict.get
     return make_sentiment(word_sentiments.get(word))
 
+def sentiment_average(ss):
+    total_sentiment = 0
+    known_sentiments = 0
+    for s in ss:
+        if has_sentiment(s):
+            total_sentiment += sentiment_value(s)
+            known_sentiments += 1
+    if known_sentiments == 0:
+        return make_sentiment(None)
+    avg_sentiment = total_sentiment / known_sentiments
+    return make_sentiment(avg_sentiment)
+
 def analyze_tweet_sentiment(tweet):
     """ Return a sentiment representing the degree of positive or negative
     sentiment in the given tweet, averaging over all the words in the tweet
@@ -227,18 +239,9 @@ def analyze_tweet_sentiment(tweet):
     False
     """
     text = tweet_text(tweet)
-    total_sentiment = 0
-    words_with_sentiment = 0
     words = extract_words(text)
-    for word in words:
-        sentiment = get_word_sentiment(word)
-        if has_sentiment(sentiment):
-            total_sentiment += sentiment_value(sentiment)
-            words_with_sentiment += 1
-    if words_with_sentiment == 0:
-        return make_sentiment(None)
-    avg_sentiment = total_sentiment / words_with_sentiment
-    return make_sentiment(avg_sentiment)
+    word_sentiments = map(get_word_sentiment, words)
+    return sentiment_average(word_sentiments)
 
 #################################
 # Phase 2: The Geometry of Maps #
@@ -325,6 +328,13 @@ def find_state_center(polygons):
 # Phase 3: The Mood of the Nation #
 ###################################
 
+def dict_filter(d, fn=key_identity):
+    d_filtered = {}
+    for k, v in d.items():
+        if fn(v):
+            d_filtered[k] = v
+    return d_filtered
+
 def dict_map(fn, d):
     d_mapped = {}
     for k, v in d.items():
@@ -370,6 +380,10 @@ def group_tweets_by_state(tweets):
         state_tweets.append(tweet)
     return tweets_by_state
 
+def average_tweet_sentiment(tweets):
+    tweet_sentiments = map(analyze_tweet_sentiment, tweets)
+    return sentiment_average(tweet_sentiments)
+
 def average_sentiments(tweets_by_state):
     """Calculate the average sentiment of the states by averaging over all
     the tweets from each state. Return the result as a dictionary from state
@@ -382,10 +396,9 @@ def average_sentiments(tweets_by_state):
 
     tweets_by_state -- A dictionary from state names to lists of tweets
     """
-    averaged_state_sentiments = {}
-    "*** YOUR CODE HERE ***"
-    return averaged_state_sentiments
-
+    averaged_sentiments = dict_map(average_tweet_sentiment, tweets_by_state)
+    averaged_sentiments = dict_filter(averaged_sentiments, has_sentiment)
+    return dict_map(sentiment_value, averaged_sentiments)
 
 ##########################
 # Command Line Interface #
