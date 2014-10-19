@@ -96,9 +96,53 @@ def tweet_string(tweet):
     point = (latitude(location), longitude(location))
     return '"{0}" @ {1}'.format(tweet_text(tweet), point)
 
+def key_identity(x):
+    return x
+
+def groupby(xs, key=key_identity):
+    """Group the elements of xs by the value of the key function.
+
+    >>> groupby([])
+    []
+    >>> groupby([1])
+    [[1]]
+    >>> groupby([1, 1])
+    [[1, 1]]
+    >>> groupby([1, 2])
+    [[1], [2]]
+    >>> groupby([1, 1, 1, 2, 2])
+    [[1, 1, 1], [2, 2]]
+    >>> groupby([1, 3, 7, 2, 6, 9, 8], lambda x: x % 2)
+    [[1, 3, 7], [2, 6], [9], [8]]
+    """
+    groups = []
+    group = []
+    k_last = None
+    for x in xs:
+        k = key(x)
+        if k != k_last:
+            if k_last is not None:
+                groups.append(group)
+            group = []
+            k_last = k
+        group.append(x)
+    if len(group) > 0:
+        groups.append(group)
+    return groups
+
 def extract_words(text):
     """Return the words in a tweet, not including punctuation.
 
+    >>> extract_words('')
+    []
+    >>> extract_words('oneword')
+    ['oneword']
+    >>> extract_words('simple text')
+    ['simple', 'text']
+    >>> extract_words('    leading spaces')
+    ['leading', 'spaces']
+    >>> extract_words('trailing spaces    ')
+    ['trailing', 'spaces']
     >>> extract_words('anything else.....not my job')
     ['anything', 'else', 'not', 'my', 'job']
     >>> extract_words('i love my job. #winning')
@@ -110,8 +154,14 @@ def extract_words(text):
     >>> extract_words('@(cat$.on^#$my&@keyboard***@#*')
     ['cat', 'on', 'my', 'keyboard']
     """
-    "*** YOUR CODE HERE ***"
-    return text.split()  # Replace this line
+    groups = groupby(text, lambda c: c in ascii_letters)
+    if len(groups) == 0:
+        return []
+    offset = 0
+    group = groups[0]
+    if group[0] not in ascii_letters:
+        offset = 1
+    return list(map(lambda g: ''.join(g), groups[offset::2]))
 
 def make_sentiment(value):
     """Return a sentiment, which represents a value that may not exist.

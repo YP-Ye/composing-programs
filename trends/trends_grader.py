@@ -81,6 +81,8 @@ def problem1():
 
 @test
 def problem2():
+    if check_doctest('groupby', trends):
+        return True
     if check_doctest('extract_words', trends):
         return True
 
