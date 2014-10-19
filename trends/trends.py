@@ -226,11 +226,19 @@ def analyze_tweet_sentiment(tweet):
     >>> has_sentiment(analyze_tweet_sentiment(no_sentiment))
     False
     """
-    # You may change any of the lines below.
-    average = make_sentiment(None)
-    "*** YOUR CODE HERE ***"
-    return average
-
+    text = tweet_text(tweet)
+    total_sentiment = 0
+    words_with_sentiment = 0
+    words = extract_words(text)
+    for word in words:
+        sentiment = get_word_sentiment(word)
+        if has_sentiment(sentiment):
+            total_sentiment += sentiment_value(sentiment)
+            words_with_sentiment += 1
+    if words_with_sentiment == 0:
+        return make_sentiment(None)
+    avg_sentiment = total_sentiment / words_with_sentiment
+    return make_sentiment(avg_sentiment)
 
 #################################
 # Phase 2: The Geometry of Maps #
