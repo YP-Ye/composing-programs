@@ -266,7 +266,31 @@ def find_centroid(polygon):
     >>> tuple(map(float, find_centroid([p1, p2, p1])))  # A zero-area polygon
     (1.0, 2.0, 0.0)
     """
-    "*** YOUR CODE HERE ***"
+    cx = 0
+    cy = 0
+    A = 0
+    n = len(polygon)
+    for i in range(n):
+        P_0 = polygon[i]
+        P_1 = polygon[(i + 1) % n]
+        x_0 = latitude(P_0)
+        y_0 = longitude(P_0)
+        x_1 = latitude(P_1)
+        y_1 = longitude(P_1)
+        cross = x_0 * y_1 - x_1 * y_0
+        cx += (x_0 + x_1) * cross
+        cy += (y_0 + y_1) * cross
+        A += cross
+    if A == 0:
+        P = polygon[0]
+        x = latitude(P)
+        y = longitude(P)
+        return (x, y, A)
+    A /= 2
+    f = 1 / (6 * A)
+    cx *= f
+    cy *= f
+    return (cx, cy, abs(A))
 
 def find_state_center(polygons):
     """Compute the geographic center of a state, averaged over its polygons.
