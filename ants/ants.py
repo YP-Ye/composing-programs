@@ -181,6 +181,9 @@ class ThrowerAnt(Ant):
     damage = 1
     food_cost = 4
 
+    min_range = 0
+    max_range = 10
+
     def nearest_bee(self, hive):
         """Return the nearest Bee in a Place that is not the Hive, connected to
         the ThrowerAnt's Place by following entrances.
@@ -191,11 +194,14 @@ class ThrowerAnt(Ant):
         """
         "*** YOUR CODE HERE ***"
         place = self.place
+        range = 0
         while place is not hive:
-            target = random_or_none(place.bees)
-            if target is not None:
-                return target
+            if self.min_range <= range <= self.max_range:
+                target = random_or_none(place.bees)
+                if target is not None:
+                    return target
             place = place.entrance
+            range += 1
 
     def throw_at(self, target):
         """Throw a leaf at the target Bee, reducing its armor."""
@@ -478,16 +484,19 @@ class LongThrower(ThrowerAnt):
     """A ThrowerAnt that only throws leaves at Bees at least 4 places away."""
 
     name = 'Long'
-    "*** YOUR CODE HERE ***"
-    implemented = False
+    food_cost = 3
+    implemented = True
 
+    min_range = 4
 
 class ShortThrower(ThrowerAnt):
     """A ThrowerAnt that only throws leaves at Bees within 3 places."""
 
     name = 'Short'
-    "*** YOUR CODE HERE ***"
-    implemented = False
+    food_cost = 3
+    implemented = True
+
+    max_range = 2
 
 
 class WallAnt(Ant):
