@@ -74,10 +74,7 @@ def apply_primitive(procedure, args, env):
     >>> apply_primitive(plus, twos, env)
     4
     """
-    py_args = []
-    while args != nil:
-        py_args.append(args.first)
-        args = args.second
+    py_args = list(args)
     if procedure.use_env:
         py_args.append(env)
     try:
@@ -213,7 +210,9 @@ def do_define_form(vals, env):
     target = vals[0]
     if scheme_symbolp(target):
         check_form(vals, 2, 2)
-        "*** YOUR CODE HERE ***"
+        val = scheme_eval(vals[1], env)
+        env.define(target, val)
+        return target
     elif isinstance(target, Pair):
         "*** YOUR CODE HERE ***"
     else:
