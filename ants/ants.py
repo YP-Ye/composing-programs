@@ -58,7 +58,9 @@ class Place:
 
     def remove_insect(self, insect):
         """Remove an Insect from this Place."""
-        if not insect.is_ant():
+        if insect.is_queen():
+            return
+        elif not insect.is_ant():
             self.bees.remove(insect)
         else:
             assert self.ant == insect, '{0} is not in {1}'.format(insect, self)
@@ -103,6 +105,9 @@ class Insect:
 
     def is_ant(self):
         """Return whether this Insect is an Ant."""
+        return False
+
+    def is_queen(self):
         return False
 
     def __repr__(self):
@@ -609,27 +614,39 @@ class QueenPlace:
     (2) The place in which the QueenAnt resides.
     """
     def __init__(self, colony_queen, ant_queen):
-        "*** YOUR CODE HERE ***"
+        self.colony_queen = colony_queen
+        self.ant_queen = ant_queen
 
     @property
     def bees(self):
-        "*** YOUR CODE HERE ***"
+        colony_bees = set(self.colony_queen.bees)
+        ant_bees = set(self.ant_queen.bees)
+        return list(colony_bees.union(ant_bees))
 
 class QueenAnt(ScubaThrower):
     """The Queen of the colony.  The game is over if a bee enters her place."""
 
     name = 'Queen'
-    "*** YOUR CODE HERE ***"
-    implemented = False
+    food_cost = 6
+    implemented = True
+
+    is_true_queen = True
 
     def __init__(self):
         ScubaThrower.__init__(self, 1)
-        "*** YOUR CODE HERE ***"
+        self.is_true_queen = QueenAnt.is_true_queen
+        QueenAnt.is_true_queen = False
+
+    def is_queen(self):
+        return self.is_true_queen
 
     def action(self, colony):
         """A queen ant throws a leaf, but also doubles the damage of ants
         in her tunnel.  Impostor queens do only one thing: die."""
-        "*** YOUR CODE HERE ***"
+        if not self.is_true_queen:
+            self.reduce_armor(self.armor)
+            return
+        colony.queen = QueenPlace(colony.queen, self.place)
 
 class AntRemover(Ant):
     """Allows the player to remove ants from the board in the GUI."""
