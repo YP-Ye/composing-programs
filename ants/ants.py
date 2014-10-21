@@ -716,10 +716,7 @@ def make_slow(action):
     """
     def slowed_action(self, colony):
         if colony.time % 2 == 0:
-            print('### OK', colony.time)
             action(self, colony)
-        else:
-            print('### slowed!', colony.time)
     return slowed_action
 
 def make_stun(action):
@@ -728,7 +725,6 @@ def make_stun(action):
     action -- An action method of some Bee
     """
     def stunned_action(self, colony):
-        print('### stunned!', colony.time)
         pass
     return stunned_action
 
@@ -742,12 +738,8 @@ def apply_effect(effect, bee, duration):
             if count < duration:
                 affected_action = effect(action)
                 count += 1
-                print('active', effect, count, duration)
-            else:
-                print('expired', effect)
             affected_action(self, colony)
         return duration_effect
-    print('new', effect, duration)
     bee.apply_effect(make_duration_effect)
 
 class SlowThrower(ThrowerAnt):
