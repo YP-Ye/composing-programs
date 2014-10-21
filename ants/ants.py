@@ -124,6 +124,10 @@ class Bee(Insect):
     name = 'Bee'
     watersafe = True
 
+    def __init__(self, armor, place=None):
+        Insect.__init__(self, armor, place)
+        self.effects = []
+
     def sting(self, ant):
         """Attack an Ant, reducing the Ant's armor by 1."""
         ant.reduce_armor(1)
@@ -139,18 +143,26 @@ class Bee(Insect):
         ant = self.place.ant
         return ant is not None and ant.blocks_path
 
-    def action(self, colony):
-        """A Bee's action stings the Ant that blocks its exit if it is blocked,
-        or moves to the exit of its current place otherwise.
+    def apply_effect(self, effect):
+        self.effects.append(effect)
 
-        colony -- The AntColony, used to access game state information.
-        """
+    def _action(self, colony):
         if self.blocked():
             self.sting(self.place.ant)
         else:
             if self.place.name != 'Hive' and self.armor > 0:
                 self.move_to(self.place.exit)
 
+    def action(self, colony):
+        """A Bee's action stings the Ant that blocks its exit if it is blocked,
+        or moves to the exit of its current place otherwise.
+
+        colony -- The AntColony, used to access game state information.
+        """
+        action_fn = Bee._action
+        for effect in self.effects:
+            action_fn = effect(action_fn)
+        action_fn(self, colony)
 
 class Ant(Insect):
     """An Ant occupies a place and does work for the colony."""
@@ -702,26 +714,48 @@ def make_slow(action):
 
     action -- An action method of some Bee
     """
-    "*** YOUR CODE HERE ***"
+    def slowed_action(self, colony):
+        if colony.time % 2 == 0:
+            print('### OK', colony.time)
+            action(self, colony)
+        else:
+            print('### slowed!', colony.time)
+    return slowed_action
 
 def make_stun(action):
     """Return a new action method that does nothing.
 
     action -- An action method of some Bee
     """
-    "*** YOUR CODE HERE ***"
+    def stunned_action(self, colony):
+        print('### stunned!', colony.time)
+        pass
+    return stunned_action
 
 def apply_effect(effect, bee, duration):
     """Apply a status effect to a Bee that lasts for duration turns."""
-    "*** YOUR CODE HERE ***"
-
+    count = 0
+    def make_duration_effect(action):
+        def duration_effect(self, colony):
+            nonlocal count
+            affected_action = action
+            if count < duration:
+                affected_action = effect(action)
+                count += 1
+                print('active', effect, count, duration)
+            else:
+                print('expired', effect)
+            affected_action(self, colony)
+        return duration_effect
+    print('new', effect, duration)
+    bee.apply_effect(make_duration_effect)
 
 class SlowThrower(ThrowerAnt):
     """ThrowerAnt that causes Slow on Bees."""
 
     name = 'Slow'
-    "*** YOUR CODE HERE ***"
-    implemented = False
+    food_cost = 4
+    implemented = True
 
     def throw_at(self, target):
         if target:
@@ -732,8 +766,8 @@ class StunThrower(ThrowerAnt):
     """ThrowerAnt that causes Stun on Bees."""
 
     name = 'Stun'
-    "*** YOUR CODE HERE ***"
-    implemented = False
+    food_cost = 6
+    implemented = True
 
     def throw_at(self, target):
         if target:
