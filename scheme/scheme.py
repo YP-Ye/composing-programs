@@ -74,7 +74,17 @@ def apply_primitive(procedure, args, env):
     >>> apply_primitive(plus, twos, env)
     4
     """
-    "*** YOUR CODE HERE ***"
+    py_args = []
+    while args != nil:
+        py_args.append(args.first)
+        args = args.second
+    if procedure.use_env:
+        py_args.append(env)
+    try:
+        return procedure.fn(*py_args)
+    except TypeError as e:
+        raise SchemeError("type error: {0}".format(*e.args))
+
 
 ################
 # Environments #
