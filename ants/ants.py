@@ -612,7 +612,7 @@ class BodyguardAnt(Ant):
     name = 'Bodyguard'
     food_cost = 4
     container = True
-    implemented = False
+    implemented = True
 
     def __init__(self):
         Ant.__init__(self, 2)
