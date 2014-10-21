@@ -530,8 +530,9 @@ class ScubaThrower(ThrowerAnt):
     """ScubaThrower is a ThrowerAnt which is watersafe."""
 
     name = 'Scuba'
-    "*** YOUR CODE HERE ***"
-    implemented = False
+    watersafe = True
+    food_cost = 5
+    implemented = True
 
 
 class HungryAnt(Ant):
