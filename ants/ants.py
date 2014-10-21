@@ -68,6 +68,9 @@ class Place:
 
         insect.place = None
 
+    def is_queen_place(self):
+        return False
+
     def __str__(self):
         return self.name
 
@@ -161,12 +164,19 @@ class Ant(Insect):
     def __init__(self, armor=1):
         """Create an Ant with an armor quantity."""
         Insect.__init__(self, armor)
+        self.damage_doubled = False
 
     def is_ant(self):
         return True
 
     def contained_ant(self):
         return None
+
+    def double_damage(self):
+        if self.damage_doubled:
+            return
+        self.damage *= 2
+        self.damage_doubled = True
 
     def can_contain(self, other):
         if not self.container:
@@ -216,7 +226,6 @@ class ThrowerAnt(Ant):
 
         Problem B5: This method returns None if there is no Bee in range.
         """
-        "*** YOUR CODE HERE ***"
         place = self.place
         range = 0
         while place is not hive:
@@ -617,6 +626,9 @@ class QueenPlace:
         self.colony_queen = colony_queen
         self.ant_queen = ant_queen
 
+    def is_queen_place(self):
+        return True
+
     @property
     def bees(self):
         colony_bees = set(self.colony_queen.bees)
@@ -640,13 +652,36 @@ class QueenAnt(ScubaThrower):
     def is_queen(self):
         return self.is_true_queen
 
+    def _double_place_damage(self, place):
+        ant = place.ant
+        if ant is None or ant.is_queen():
+            return
+        ant.double_damage()
+        contained_ant = ant.contained_ant()
+        if contained_ant is None or contained_ant.is_queen():
+            return
+        contained_ant.double_damage()
+
     def action(self, colony):
         """A queen ant throws a leaf, but also doubles the damage of ants
         in her tunnel.  Impostor queens do only one thing: die."""
         if not self.is_true_queen:
             self.reduce_armor(self.armor)
             return
-        colony.queen = QueenPlace(colony.queen, self.place)
+        # NOTE: this isn't in the spec, but you can never move the queen once
+        # placed so it makes no sense to keep chaining QueenPlaces.
+        if not colony.queen.is_queen_place():
+            colony.queen = QueenPlace(colony.queen, self.place)
+        ScubaThrower.action(self, colony)
+        place = self.place
+        while place is not None:
+            self._double_place_damage(place)
+            place = place.exit
+        place = self.place.entrance
+        while place is not None:
+            self._double_place_damage(place)
+            place = place.entrance
+
 
 class AntRemover(Ant):
     """Allows the player to remove ants from the board in the GUI."""
