@@ -503,12 +503,11 @@ class WallAnt(Ant):
     """WallAnt is an Ant which has a large amount of armor."""
 
     name = 'Wall'
-    "*** YOUR CODE HERE ***"
-    implemented = False
+    food_cost = 4
+    implemented = True
 
     def __init__(self):
-        "*** YOUR CODE HERE ***"
-        Ant.__init__(self)
+        Ant.__init__(self, armor=4)
 
 
 class NinjaAnt(Ant):
