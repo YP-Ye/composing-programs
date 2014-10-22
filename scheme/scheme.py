@@ -53,13 +53,13 @@ def scheme_eval(expr, env):
         args = rest.map(lambda operand: scheme_eval(operand, env))
         return scheme_apply(procedure, args, env)
 
-
 def scheme_apply(procedure, args, env):
     """Apply Scheme PROCEDURE to argument values ARGS in environment ENV."""
     if isinstance(procedure, PrimitiveProcedure):
         return apply_primitive(procedure, args, env)
     elif isinstance(procedure, LambdaProcedure):
-        "*** YOUR CODE HERE ***"
+        frame = procedure.env.make_call_frame(procedure.formals, args)
+        return scheme_eval(procedure.body, frame)
     elif isinstance(procedure, MuProcedure):
         "*** YOUR CODE HERE ***"
     else:
@@ -103,13 +103,28 @@ class Frame:
             return "<{{{0}}} -> {1}>".format(', '.join(s), repr(self.parent))
 
     def lookup(self, symbol):
-        """Return the value bound to SYMBOL.  Errors if SYMBOL is not found."""
+        """Return the value bound to SYMBOL.  Errors if SYMBOL is not found.
+
+        >>> env = create_global_frame()
+        >>> formals, vals = read_line("(a)"), read_line("(1)")
+        >>> frame = env.make_call_frame(formals, vals)
+        >>> formals, vals = read_line("(b)"), read_line("(2)")
+        >>> frame = frame.make_call_frame(formals, vals)
+        >>> frame.lookup("b")
+        2
+        >>> frame.lookup("a")
+        1
+        >>> frame.lookup("foobar")
+        Traceback (most recent call last):
+            ...
+        scheme_primitives.SchemeError: unknown identifier: foobar
+        """
         frame = self
         while frame is not None:
-            if symbol in self.bindings:
-                return self.bindings[symbol]
+            if symbol in frame.bindings:
+                return frame.bindings[symbol]
             frame = frame.parent
-        raise SchemeError("unknown identifier: {0}".format(str(symbol)))
+        raise SchemeError("unknown identifier: " + str(symbol))
 
 
     def global_frame(self):
