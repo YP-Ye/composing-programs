@@ -286,7 +286,13 @@ def do_let_form(vals, env):
 def do_if_form(vals, env):
     """Evaluate if form with parameters VALS in environment ENV."""
     check_form(vals, 2, 3)
-    "*** YOUR CODE HERE ***"
+    cond = scheme_eval(vals[0], env)
+    if scheme_true(cond):
+        return vals[1]
+    elif len(vals) == 3:
+        return vals[2]
+    else:
+        return okay
 
 def do_and_form(vals, env):
     """Evaluate short-circuited and with parameters VALS in environment ENV."""
