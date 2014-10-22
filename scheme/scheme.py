@@ -195,7 +195,12 @@ def do_lambda_form(vals, env):
     check_form(vals, 2)
     formals = vals[0]
     check_formals(formals)
-    "*** YOUR CODE HERE ***"
+    body = vals.second
+    if len(body) > 1:
+        body = Pair('begin', body)
+    else:
+        body = body.first
+    return LambdaProcedure(formals, body, env)
 
 def do_mu_form(vals):
     """Evaluate a mu form with parameters VALS."""
@@ -291,10 +296,10 @@ def do_cond_form(vals, env):
 def do_begin_form(vals, env):
     """Evaluate begin form with parameters VALS in environment ENV."""
     check_form(vals, 1)
-    if vals.second == nil:
-        return vals.first
-    scheme_eval(vals.first, env)
-    return Pair("begin", vals.second)
+    last = len(vals) - 1
+    for i in range(last):
+        scheme_eval(vals[i], env)
+    return vals[last]
 
 LOGIC_FORMS = {
         "and": do_and_form,
