@@ -131,7 +131,16 @@ class Frame:
         <{a: 1, b: 2, c: 3} -> <Global Frame>>
         """
         frame = Frame(self)
-        "*** YOUR CODE HERE ***"
+        check_formals(formals)
+        num_formals = len(formals)
+        num_vals = len(vals)
+        if num_formals != num_vals:
+            msg = 'expected {0} vals, got {1}'.format(num_formals, num_vals)
+            raise SchemeError(msg)
+        for i in range(num_formals):
+            sym = formals[i]
+            val = vals[i]
+            frame.define(sym, val)
         return frame
 
     def define(self, sym, val):
