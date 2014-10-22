@@ -219,7 +219,14 @@ def do_define_form(vals, env):
         env.define(target, val)
         return target
     elif isinstance(target, Pair):
-        "*** YOUR CODE HERE ***"
+        check_form(target, 1)
+        check_formals(target)
+        args = target.second
+        target = target[0]
+        lambda_vals = Pair(args, vals.second)
+        val = do_lambda_form(lambda_vals, env)
+        env.define(target, val)
+        return target
     else:
         raise SchemeError("bad argument to define")
 
