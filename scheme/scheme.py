@@ -323,8 +323,34 @@ def check_formals(formals):
     in which each symbol is distinct. Raise a SchemeError if the list of formals
     is not a well-formed list of symbols or if any symbol is repeated.
 
+    >>> check_formals(read_line("(a)"))
     >>> check_formals(read_line("(a b c)"))
+    >>> check_formals(read_line("42"))
+    Traceback (most recent call last):
+        ...
+    scheme_primitives.SchemeError: badly formed parameter list: 42
+    >>> check_formals(read_line("(a 42)"))
+    Traceback (most recent call last):
+        ...
+    scheme_primitives.SchemeError: invalid symbol: 42
+    >>> check_formals(read_line("(a a)"))
+    Traceback (most recent call last):
+        ...
+    scheme_primitives.SchemeError: duplicate symbol: a
     """
+    if not scheme_listp(formals):
+        raise SchemeError('badly formed parameter list: ' + str(formals))
+    symbols = set()
+    cur = formals
+    while cur is not nil:
+        formal = cur.first
+        if not scheme_symbolp(formal):
+            raise SchemeError('invalid symbol: ' + str(formal))
+        if formal in symbols:
+            raise SchemeError('duplicate symbol: ' + str(formal))
+        symbols.add(formal)
+        cur = cur.second
+
     "*** YOUR CODE HERE ***"
 
 ##################
