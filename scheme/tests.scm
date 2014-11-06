@@ -535,12 +535,6 @@ one-through-four
 ((lambda (x) (display x) (newline) x) 2)
 ; expect 2 ; 2
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;; Move the following (exit) line to run additional tests. ;;;
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(exit)
-
-
 (define g (mu () x))
 (define (high f x)
   (f))
