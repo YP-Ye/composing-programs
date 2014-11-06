@@ -98,11 +98,6 @@ circumference
 (f 5)
 ; expect 136
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;; Move the following (exit) line to run additional tests. ;;;
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(exit)
-
 ;;; 1.1.6
 
 (define (abs x)
@@ -150,6 +145,7 @@ circumference
 (square (sqrt 1000))
 ; expect 1000.000369924366
 
+
 ;;; 1.1.8
 
 (define (sqrt x)
@@ -193,6 +189,12 @@ circumference
   (sum identity a inc b))
 (sum-integers 1 10)
 ; expect 55
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;; Move the following (exit) line to run additional tests. ;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(exit)
+
 
 ;;; 1.3.2
 
