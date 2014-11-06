@@ -190,11 +190,6 @@ circumference
 (sum-integers 1 10)
 ; expect 55
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;; Move the following (exit) line to run additional tests. ;;;
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(exit)
-
 
 ;;; 1.3.2
 
@@ -382,6 +377,7 @@ one-through-four
 (enumerate-tree (list 1 (list 2 (list 3 4)) 5))
 ; expect (1 2 3 4 5)
 
+
 ;;; 2.3.1
 
 (define a 1)
@@ -538,6 +534,12 @@ one-through-four
 
 ((lambda (x) (display x) (newline) x) 2)
 ; expect 2 ; 2
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;; Move the following (exit) line to run additional tests. ;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(exit)
+
 
 (define g (mu () x))
 (define (high f x)
